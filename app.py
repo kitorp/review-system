@@ -201,15 +201,16 @@ def get_text_from_local(docs):
     return doc_text
 
 
-def main():
-    """
-    Main function to initialize the Streamlit application.
-    Handles file uploads, user queries, and bot responses.
+def process_pdf(file_paths):
+    with st.spinner('Processing the PDF...'):
+        doc_text = get_text_from_local(file_paths)
+        doc_chunks = get_chunks(doc_text)
+        vectors = get_vector(doc_chunks)
+        llm_chain = get_llm_chain(vectors)
+    st.session_state.pdf_processed = True
+    return llm_chain
 
-    Returns:
-    --------
-    None
-    """
+def main():
     st.set_page_config(page_title="ChatPDF")
     st.title("ChatPDF - Chat with PDFs 📄")
 
@@ -221,6 +222,9 @@ def main():
 
     if not "doc_len" in st.session_state:
         st.session_state.doc_len = 0
+
+    if not "pdf_processed" in st.session_state:
+        st.session_state.pdf_processed = False
 
     user_input = st.text_input("Ask any question related to the pdf")
 
@@ -241,14 +245,12 @@ def main():
     # Replace the file uploader with a call to get_text_from_local
     file_paths = ['files/SR2013.pdf']  # Replace with your file paths
 
-    with st.spinner('Processing the PDF...'):
-        doc_text = get_text_from_local(file_paths)
-        doc_chunks = get_chunks(doc_text)
-        vectors = get_vector(doc_chunks)
-        st.session_state.llm_chain = get_llm_chain(vectors)
+    if not st.session_state.pdf_processed:
+        st.session_state.llm_chain = process_pdf(file_paths)
 
     with st.chat_message("assistant"):
         st.write("Hello, Please ask you questions required to be answered from the PDF")
 
 if __name__ == "__main__":
     main()
+
