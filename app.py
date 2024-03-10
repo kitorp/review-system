@@ -211,8 +211,8 @@ def process_pdf(file_paths):
     return llm_chain
 
 def main():
-    st.set_page_config(page_title="ChatPDF")
-    st.title("ChatPDF - Chat with PDFs 📄")
+    st.set_page_config(page_title="ChatBOT")
+    st.title("Credit System ChatBot📄")
 
     if not "llm_chain" in st.session_state:
         st.session_state.llm_chain = None
