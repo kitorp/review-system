@@ -226,24 +226,15 @@ def main():
     elif user_input and not st.session_state.llm_chain:
         st.error("Please upload files and click proceed before asking questions")
 
-    with st.sidebar:
-        st.subheader("About")
-
-        docs = st.file_uploader(
-            "Upload PDF and click proceed", accept_multiple_files=True
-        )
-
-        if len(docs) > st.session_state.doc_len:
-            st.session_state.doc_len = len(docs)
-            with st.spinner("Processing..."):
-                doc_text = get_text(docs)
-                doc_chunks = get_chunks(doc_text)
-                vectors = get_vector(doc_chunks)
-                st.session_state.llm_chain = get_llm_chain(vectors)
+    # Replace the file uploader with a call to get_text_from_local
+    file_paths = ['files/SR2013.pdf']  # Replace with your file paths
+    doc_text = get_text_from_local(file_paths)
+    doc_chunks = get_chunks(doc_text)
+    vectors = get_vector(doc_chunks)
+    st.session_state.llm_chain = get_llm_chain(vectors)
 
     with st.chat_message("assistant"):
-        st.write("Hello, Please upload your files and click proceed to ask questions.")
-
+        st.write("Hello, Please ask you questions required to be answered from the PDF")
 
 if __name__ == "__main__":
     main()
