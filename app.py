@@ -226,30 +226,29 @@ def main():
     if not "pdf_processed" in st.session_state:
         st.session_state.pdf_processed = False
 
-    user_input = st.text_input("Ask any question related to the pdf")
-
-    if user_input and st.session_state.llm_chain:
-        bot_response = st.session_state.llm_chain({"question": user_input})
-        st.session_state.memory = bot_response["chat_history"]
-        for idx, msg in enumerate(st.session_state.memory):
-            if idx % 2 == 0:
-                with st.chat_message("user"):
-                    st.write(msg.content)
-            else:
-                with st.chat_message("assistant"):
-                    st.write(msg.content)
-
-    elif user_input and not st.session_state.llm_chain:
-        st.error("Please upload files and click proceed before asking questions")
-
     # Replace the file uploader with a call to get_text_from_local
     file_paths = ['files/SR2013.pdf']  # Replace with your file paths
 
     if not st.session_state.pdf_processed:
         st.session_state.llm_chain = process_pdf(file_paths)
 
-    with st.chat_message("assistant"):
-        st.write("Hello, Please ask you questions required to be answered from the PDF")
+    # Moved the user input box to the end of the function
+    user_input = st._bottom.text_input("Ask any question related to the pdf")
+
+    if user_input and st.session_state.llm_chain:
+        bot_response = st.session_state.llm_chain({"question": user_input})
+        st.session_state.memory = bot_response["chat_history"]
+        for idx, msg in enumerate(st.session_state.memory):
+            if idx % 2 == 0:
+                with st._main.chat_message("user"):
+                    st.write(msg.content)
+            else:
+                with st._main.chat_message("assistant"):
+                    st.write(msg.content)
+        # st._bottom.text_input("Ask any question related to the pdf", value="", key="unique_user_input")
+
+    elif user_input and not st.session_state.llm_chain:
+        st.error("Please upload files and click proceed before asking questions")
 
 if __name__ == "__main__":
     main()
