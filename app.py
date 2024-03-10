@@ -35,8 +35,6 @@ upload PDFs and DOCX files, and then interact with their content using natural l
 """
 
 
-import os
-
 import streamlit as st
 from docx import Document
 from langchain.chains import ConversationalRetrievalChain
@@ -50,14 +48,19 @@ from PyPDF2 import PdfReader
 from dotenv import load_dotenv
 import os
 
+# os.environ["OPENAI_API_KEY"] = "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"  # OPENAI_API_KEY
+
+
+
 # Load environment variables from .env file
-# load_dotenv()
+load_dotenv()
 
 # Get the API key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 if OPENAI_API_KEY is None:
     raise ValueError("OPENAI_API_KEY environment variable not set")
+
 
 def parse_docx(data):
     """
@@ -198,15 +201,16 @@ def get_text_from_local(docs):
     return doc_text
 
 
-def main():
-    """
-    Main function to initialize the Streamlit application.
-    Handles file uploads, user queries, and bot responses.
+def process_pdf(file_paths):
+    with st.spinner('Processing the PDF...'):
+        doc_text = get_text_from_local(file_paths)
+        doc_chunks = get_chunks(doc_text)
+        vectors = get_vector(doc_chunks)
+        llm_chain = get_llm_chain(vectors)
+    st.session_state.pdf_processed = True
+    return llm_chain
 
-    Returns:
-    --------
-    None
-    """
+def main():
     st.set_page_config(page_title="ChatPDF")
     st.title("ChatPDF - Chat with PDFs 📄")
 
@@ -219,40 +223,33 @@ def main():
     if not "doc_len" in st.session_state:
         st.session_state.doc_len = 0
 
-    user_input = st.text_input("Ask any question related to the pdf")
+    if not "pdf_processed" in st.session_state:
+        st.session_state.pdf_processed = False
+
+    # Replace the file uploader with a call to get_text_from_local
+    file_paths = ['files/SR2013.pdf']  # Replace with your file paths
+
+    if not st.session_state.pdf_processed:
+        st.session_state.llm_chain = process_pdf(file_paths)
+
+    # Moved the user input box to the end of the function
+    user_input = st._bottom.text_input("Ask any question related to the pdf")
 
     if user_input and st.session_state.llm_chain:
         bot_response = st.session_state.llm_chain({"question": user_input})
         st.session_state.memory = bot_response["chat_history"]
         for idx, msg in enumerate(st.session_state.memory):
             if idx % 2 == 0:
-                with st.chat_message("user"):
+                with st._main.chat_message("user"):
                     st.write(msg.content)
             else:
-                with st.chat_message("assistant"):
+                with st._main.chat_message("assistant"):
                     st.write(msg.content)
+        # st._bottom.text_input("Ask any question related to the pdf", value="", key="unique_user_input")
 
     elif user_input and not st.session_state.llm_chain:
         st.error("Please upload files and click proceed before asking questions")
 
-    with st.sidebar:
-        st.subheader("About")
-
-        docs = st.file_uploader(
-            "Upload PDF and click proceed", accept_multiple_files=True
-        )
-
-        if len(docs) > st.session_state.doc_len:
-            st.session_state.doc_len = len(docs)
-            with st.spinner("Processing..."):
-                doc_text = get_text(docs)
-                doc_chunks = get_chunks(doc_text)
-                vectors = get_vector(doc_chunks)
-                st.session_state.llm_chain = get_llm_chain(vectors)
-
-    with st.chat_message("assistant"):
-        st.write("Hello, Please upload your files and click proceed to ask questions.")
-
-
 if __name__ == "__main__":
     main()
+
