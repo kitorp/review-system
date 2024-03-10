@@ -47,8 +47,17 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
 from PyPDF2 import PdfReader
 
-os.environ["OPENAI_API_KEY"] = "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"  # OPENAI_API_KEY
+from dotenv import load_dotenv
+import os
 
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the API key
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+if OPENAI_API_KEY is None:
+    raise ValueError("OPENAI_API_KEY environment variable not set")
 
 def parse_docx(data):
     """
