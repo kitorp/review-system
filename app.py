@@ -35,8 +35,6 @@ upload PDFs and DOCX files, and then interact with their content using natural l
 """
 
 
-import os
-
 import streamlit as st
 from docx import Document
 from langchain.chains import ConversationalRetrievalChain
@@ -47,7 +45,21 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
 from PyPDF2 import PdfReader
 
-os.environ["OPENAI_API_KEY"] = "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"  # OPENAI_API_KEY
+from dotenv import load_dotenv
+import os
+
+# os.environ["OPENAI_API_KEY"] = "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"  # OPENAI_API_KEY
+
+
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the API key
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+if OPENAI_API_KEY is None:
+    raise ValueError("OPENAI_API_KEY environment variable not set")
 
 
 def parse_docx(data):
@@ -228,10 +240,12 @@ def main():
 
     # Replace the file uploader with a call to get_text_from_local
     file_paths = ['files/SR2013.pdf']  # Replace with your file paths
-    doc_text = get_text_from_local(file_paths)
-    doc_chunks = get_chunks(doc_text)
-    vectors = get_vector(doc_chunks)
-    st.session_state.llm_chain = get_llm_chain(vectors)
+
+    with st.spinner('Processing the PDF...'):
+        doc_text = get_text_from_local(file_paths)
+        doc_chunks = get_chunks(doc_text)
+        vectors = get_vector(doc_chunks)
+        st.session_state.llm_chain = get_llm_chain(vectors)
 
     with st.chat_message("assistant"):
         st.write("Hello, Please ask you questions required to be answered from the PDF")
